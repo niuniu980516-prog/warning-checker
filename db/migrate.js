@@ -256,6 +256,17 @@ function migrate() {
     console.log(`Migrated ${funds.length} fund_warnings rows into fund_warning_items (one-time schema redesign).`);
   }
 
+  // Create default admin account if no users exist yet
+  const userCount = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
+  if (userCount === 0) {
+    const bcrypt = require('bcryptjs');
+    db.prepare(`
+      INSERT INTO users (id, username, password_hash, role, is_active)
+      VALUES (?, 'admin', ?, 'admin', 1)
+    `).run(uuidv4(), bcrypt.hashSync('Admin1234!', 10));
+    console.log('Created default admin user (admin / Admin1234!)');
+  }
+
   console.log('Database migration completed.');
   return db;
 }

@@ -36,17 +36,11 @@ const upload = multer({
 });
 
 router.get('/upload', (req, res) => {
-  const db = getDb();
-  const funds = db.prepare('SELECT id, name, inception_date FROM funds WHERE is_active = 1 ORDER BY name').all();
-  db.close();
-  res.render('index', { error: null, adTypes: AD_TYPES, funds });
+  res.render('index', { error: null, adTypes: AD_TYPES });
 });
 
 router.post('/upload', upload.single('document'), async (req, res) => {
-  const db0 = getDb();
-  const funds = db0.prepare('SELECT id, name, inception_date FROM funds WHERE is_active = 1 ORDER BY name').all();
-  db0.close();
-  if (!req.file) return res.render('index', { error: '請選擇檔案', adTypes: AD_TYPES, funds });
+  if (!req.file) return res.render('index', { error: '請選擇檔案', adTypes: AD_TYPES });
 
   // Selected ad types (checkbox group `ad_types`). A single checked checkbox
   // posts as a plain string, multiple as an array — normalize to an array and
@@ -56,10 +50,8 @@ router.post('/upload', upload.single('document'), async (req, res) => {
     .filter(t => AD_TYPES.includes(t));
   if (selectedAdTypes.length === 0) {
     fs.unlink(req.file.path, () => {});
-    return res.render('index', { error: '請至少勾選一項廣告類型', adTypes: AD_TYPES, funds });
+    return res.render('index', { error: '請至少勾選一項廣告類型', adTypes: AD_TYPES });
   }
-
-  const selectedFundId = req.body.fund_id || null;
 
   const sessionId = uuidv4();
   const filePath = req.file.path;
@@ -75,24 +67,16 @@ router.post('/upload', upload.single('document'), async (req, res) => {
   // Save session record immediately
   const db = getDb();
   db.prepare(`
-    INSERT INTO check_sessions (id, user_id, original_filename, file_path, status, ad_types, fund_id, expires_at)
-    VALUES (?, ?, ?, ?, 'processing', ?, ?, ?)
-  `).run(sessionId, req.session.userId, originalName, filePath, JSON.stringify(selectedAdTypes), selectedFundId, expiresAt);
+    INSERT INTO check_sessions (id, user_id, original_filename, file_path, status, ad_types, expires_at)
+    VALUES (?, ?, ?, ?, 'processing', ?, ?)
+  `).run(sessionId, req.session.userId, originalName, filePath, JSON.stringify(selectedAdTypes), expiresAt);
   db.close();
 
   // Return immediately with processing page, run checks in background
   res.redirect(`/results/${sessionId}`);
 
-  // Resolve fund info for the checker
-  let fundInfo = null;
-  if (selectedFundId) {
-    const db2 = getDb();
-    fundInfo = db2.prepare('SELECT id, name, inception_date FROM funds WHERE id = ?').get(selectedFundId);
-    db2.close();
-  }
-
   // Run checks asynchronously
-  processDocument(sessionId, filePath, format, tmpDir, originalName, req.session, selectedAdTypes, fundInfo).catch(err => {
+  processDocument(sessionId, filePath, format, tmpDir, originalName, req.session, selectedAdTypes).catch(err => {
     console.error('Processing error:', err);
     const db2 = getDb();
     db2.prepare("UPDATE check_sessions SET status='failed', error_message=? WHERE id=?")
@@ -101,7 +85,7 @@ router.post('/upload', upload.single('document'), async (req, res) => {
   });
 });
 
-async function processDocument(sessionId, filePath, format, tmpDir, originalName, sessionData, selectedAdTypes = [], fundInfo = null) {
+async function processDocument(sessionId, filePath, format, tmpDir, originalName, sessionData, selectedAdTypes = []) {
   let pdfPath = null, docxPath = null, pptxPath = null;
 
   try {
@@ -126,7 +110,7 @@ async function processDocument(sessionId, filePath, format, tmpDir, originalName
     }
 
     // Step 4: Run all checks (filtered to the selected ad types)
-    const checkResult = await checkDocument(extracted, { adTypes: selectedAdTypes, fund: fundInfo });
+    const checkResult = await checkDocument(extracted, { adTypes: selectedAdTypes });
 
     // Step 5: Generate annotated document
     const annotatedPath = await annotateDocument(filePath, tmpDir, checkResult.itemResults, format, extracted.pages);

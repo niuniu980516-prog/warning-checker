@@ -18,23 +18,6 @@
             <div class="form-text">支援格式：Word（DOC/DOCX）、PowerPoint（PPT/PPTX）、PDF（最大 100MB）</div>
           </div>
 
-          <% if (typeof funds !== 'undefined' && funds.length > 0) { %>
-          <div class="mb-3">
-            <label class="form-label fw-semibold">對應基金 <span class="text-muted small fw-normal">（選填；選擇後系統可依成立日判斷績效揭露適用性）</span></label>
-            <select name="fund_id" class="form-select">
-              <option value="">— 不指定基金 —</option>
-              <% for (const f of funds) {
-                const diffDays = Math.floor((Date.now() - new Date(f.inception_date).getTime()) / 86400000);
-                const years = Math.floor(diffDays / 365);
-                const months = Math.floor((diffDays % 365) / 30);
-                const ageLabel = years > 0 ? `${years}年${months}個月` : `${months}個月`;
-              %>
-              <option value="<%= f.id %>"><%= f.name %> （成立 <%= ageLabel %>）</option>
-              <% } %>
-            </select>
-          </div>
-          <% } %>
-
           <div class="mb-3">
             <label class="form-label fw-semibold">廣告類型 <span class="text-danger">*</span> <span class="text-muted small fw-normal">（可複選；僅執行符合所選類型的檢查項目）</span></label>
             <div class="border rounded p-2" id="adTypesGroup">

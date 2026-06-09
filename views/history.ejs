@@ -1,0 +1,87 @@
+<%- include('partials/head', { title: '歷史記錄', page: 'history' }) %>
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h4 class="mb-0"><i class="bi bi-clock-history me-2"></i>歷史記錄</h4>
+</div>
+<% if (deleted) { %>
+<div class="alert alert-success py-2 mb-3"><i class="bi bi-check-circle me-2"></i>已刪除記錄</div>
+<% } %>
+
+<% if (!sessions || sessions.length === 0) { %>
+<div class="card shadow-sm">
+  <div class="card-body text-center py-5 text-muted">
+    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+    尚無檢查記錄
+  </div>
+</div>
+<% } else { %>
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>檔案名稱</th>
+          <% if (isAdmin) { %><th>使用者</th><% } %>
+          <th>狀態</th>
+          <th>結果</th>
+          <th>上傳時間</th>
+          <th>到期日</th>
+          <th style="width:120px"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (const s of sessions) { %>
+        <%
+          const statusLabel = { processing: '處理中', completed: '完成', failed: '失敗' };
+          const statusClass = { processing: 'warning', completed: 'success', failed: 'danger' };
+        %>
+        <tr>
+          <td>
+            <i class="bi bi-file-earmark me-1 text-muted"></i>
+            <%= s.original_filename %>
+          </td>
+          <% if (isAdmin) { %>
+          <td><%= s.username || '—' %></td>
+          <% } %>
+          <td>
+            <span class="badge bg-<%= statusClass[s.status] || 'secondary' %>">
+              <%= statusLabel[s.status] || s.status %>
+            </span>
+          </td>
+          <td>
+            <% if (s.summary) { %>
+              <span class="text-success fw-semibold"><%= s.summary.passed %></span>
+              <span class="text-muted">/</span>
+              <span class="text-danger fw-semibold"><%= s.summary.failed %></span>
+              <span class="text-muted small"> 通過/不符合</span>
+            <% } else { %>
+              <span class="text-muted">—</span>
+            <% } %>
+          </td>
+          <td class="small text-muted">
+            <%= formatDateTime(s.created_at) %>
+          </td>
+          <td class="small text-muted">
+            <%= s.expires_at ? formatDate(s.expires_at) : '—' %>
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="/results/<%= s.id %>" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye"></i>
+              </a>
+              <form method="POST" action="/history/<%= s.id %>/delete" onsubmit="return confirm('確定刪除此記錄？')">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<% } %>
+
+<%- include('partials/foot') %>

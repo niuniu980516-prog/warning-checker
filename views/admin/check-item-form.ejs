@@ -1,0 +1,199 @@
+<%- include('../partials/head', { title: item ? '編輯檢查項目' : '新增檢查項目', page: 'admin' }) %>
+
+<%
+const emptySub = {
+  id: '', description: '', check_type: 'ai', parameters: '{}',
+  applicability_prompt: '', applicability_mode: 'ai', applicabilityKeywordsText: '',
+  compliance_prompt: '', compliance_mode: 'ai', compliance_text: '', complianceFormat: {},
+  isActive: true,
+};
+%>
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary bg-opacity-10 fw-semibold">
+        <i class="bi bi-<%= item ? 'pencil' : 'plus-lg' %> me-2"></i>
+        <%= item ? '編輯檢查項目' : '新增檢查項目' %>
+      </div>
+      <div class="card-body p-4">
+
+        <% if (error) { %>
+          <div class="alert alert-danger"><%= error %></div>
+        <% } %>
+
+        <form method="POST" action="/admin/check-items">
+          <% if (item && item.id) { %>
+            <input type="hidden" name="id" value="<%= item.id %>">
+          <% } %>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">類別 <span class="text-danger">*</span></label>
+            <input type="text" name="category" class="form-control"
+              value="<%= item ? item.category : '' %>"
+              list="categoryList" required placeholder="例：基金績效及業績數字之表達">
+            <datalist id="categoryList">
+              <% for (const cat of categories) { %>
+                <option value="<%= cat %>">
+              <% } %>
+            </datalist>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">檢查描述（主描述） <span class="text-danger">*</span></label>
+            <textarea name="description" class="form-control" rows="3" required><%= item ? item.description : '' %></textarea>
+            <div class="form-text">顯示於檢查表，並作為下方各子項目「適用性／合規判斷」AI 提示詞與描述的預設依據（子項目可個別覆寫）</div>
+          </div>
+
+          <%
+            const itemAdTypes = (item && item.selectedAdTypes) ? item.selectedAdTypes : [];
+          %>
+          <div class="mb-4">
+            <label class="form-label fw-semibold mb-1">適用廣告類型 <span class="text-muted small fw-normal">（可複選；不勾選表示適用於所有廣告類型）</span></label>
+            <div class="border rounded p-2 d-flex flex-wrap gap-3">
+              <% (typeof adTypes !== 'undefined' ? adTypes : []).forEach((t, i) => { %>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="ad_types" value="<%= t %>" id="itemAdType<%= i %>"
+                  <%= itemAdTypes.includes(t) ? 'checked' : '' %>>
+                <label class="form-check-label small" for="itemAdType<%= i %>"><%= t %></label>
+              </div>
+              <% }) %>
+            </div>
+            <div class="form-text">只有當文宣上傳時所選的廣告類型，與此處勾選的類型有交集，本檢查項目才會執行。</div>
+          </div>
+
+          <div class="mb-3 d-flex align-items-center justify-content-between">
+            <label class="form-label fw-semibold mb-0">子檢查項目 <span class="text-muted small fw-normal">同一序號可拆成多個各自獨立判斷的子項目（適用性＋合規性各自設定）</span></label>
+            <button type="button" id="addSubItemBtn" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-plus-lg me-1"></i>新增子項目
+            </button>
+          </div>
+
+          <div id="subItemsContainer">
+            <% subItems.forEach((sub, idx) => { %>
+              <%- include('partials/check-sub-item-block', { sub, idx, removable: subItems.length > 1 }) %>
+            <% }) %>
+          </div>
+
+          <template id="subItemTemplate"><%- include('partials/check-sub-item-block', { sub: emptySub, idx: '__IDX__', removable: true }) %></template>
+
+          <!-- 排序／啟用（序號層級） -->
+          <div class="row mb-3 mt-2">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">排序</label>
+              <input type="number" name="sort_order" class="form-control"
+                value="<%= item ? (item.sort_order || 0) : 0 %>" min="0">
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+              <div class="form-check mb-2">
+                <input type="checkbox" name="is_active" class="form-check-input" id="isActive"
+                  <%= (!item || item.is_active) ? 'checked' : '' %>>
+                <label class="form-check-label fw-semibold" for="isActive">啟用此項目</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-check-lg me-1"></i>儲存
+            </button>
+            <a href="/admin/check-items" class="btn btn-outline-secondary">取消</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const container = document.getElementById('subItemsContainer');
+  const template = document.getElementById('subItemTemplate');
+  const addBtn = document.getElementById('addSubItemBtn');
+  let nextIdx = <%= subItems.length %>;
+
+  function syncPanels(scope, radioName, panelClass) {
+    const selected = scope.querySelector(`input[name="${radioName}"]:checked`);
+    if (!selected) return;
+    scope.querySelectorAll(`.${panelClass}`).forEach(p => p.classList.add('d-none'));
+    const panel = scope.querySelector(`.${panelClass}-${selected.value}`);
+    if (panel) panel.classList.remove('d-none');
+  }
+
+  function initBlock(block) {
+    const idx = block.dataset.idx;
+
+    block.querySelectorAll('.applicability-mode-radio').forEach(r =>
+      r.addEventListener('change', () => syncPanels(block, `sub[${idx}][applicability_mode]`, 'applicability-panel')));
+    block.querySelectorAll('.compliance-mode-radio').forEach(r =>
+      r.addEventListener('change', () => syncPanels(block, `sub[${idx}][compliance_mode]`, 'compliance-panel')));
+    syncPanels(block, `sub[${idx}][applicability_mode]`, 'applicability-panel');
+    syncPanels(block, `sub[${idx}][compliance_mode]`, 'compliance-panel');
+
+    block.querySelectorAll('.ai-generate-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const subDescription = block.querySelector('textarea[name$="[description]"]').value.trim();
+        const description = subDescription || document.querySelector('textarea[name="description"]').value.trim();
+        const category = document.querySelector('input[name="category"]').value.trim();
+        if (!description) {
+          alert('請先填寫「檢查描述」（本子項目描述或上方主描述），AI 才能依此生成提示詞');
+          return;
+        }
+        const targetField = block.querySelector(`textarea[name="sub[${idx}][${btn.dataset.field}]"]`);
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>生成中…';
+        try {
+          const resp = await fetch('/admin/check-items/generate-prompt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description, category, field: btn.dataset.kind }),
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.error || 'AI 生成失敗');
+          targetField.value = data.text;
+        } catch (err) {
+          alert(err.message || 'AI 生成失敗，請稍後再試');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
+      });
+    });
+
+    const removeBtn = block.querySelector('.remove-sub-item-btn');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', () => {
+        block.remove();
+        renumber();
+      });
+    }
+  }
+
+  function renumber() {
+    const blocks = container.querySelectorAll('.sub-item-block');
+    blocks.forEach((block, i) => {
+      const numEl = block.querySelector('.sub-item-number');
+      if (numEl) numEl.textContent = i + 1;
+      const rmBtn = block.querySelector('.remove-sub-item-btn');
+      if (rmBtn) rmBtn.style.display = blocks.length > 1 ? '' : 'none';
+    });
+  }
+
+  container.querySelectorAll('.sub-item-block').forEach(initBlock);
+  renumber();
+
+  addBtn.addEventListener('click', () => {
+    const html = template.innerHTML.replace(/__IDX__/g, String(nextIdx));
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html.trim();
+    const block = wrapper.firstElementChild;
+    container.appendChild(block);
+    initBlock(block);
+    nextIdx++;
+    renumber();
+  });
+})();
+</script>
+
+<%- include('../partials/foot') %>

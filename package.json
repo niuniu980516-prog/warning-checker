@@ -1,0 +1,31 @@
+{
+  "name": "warning-checker",
+  "version": "1.0.0",
+  "description": "廣告文宣警語自動檢查工具",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node db/seed.js",
+    "cleanup": "node scripts/cleanup.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.54.0",
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^11.9.1",
+    "connect-sqlite3": "^0.9.15",
+    "sqlite3": "^5.1.7",
+    "docx": "^9.5.0",
+    "dotenv": "^16.5.0",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "fast-xml-parser": "^4.5.3",
+    "jszip": "^3.10.1",
+    "mammoth": "^1.8.0",
+    "multer": "^2.0.1",
+    "pdf-lib": "^1.17.1",
+    "node-tesseract-ocr": "^2.2.1",
+    "pdf-parse": "^1.1.1",
+    "uuid": "^11.1.0"
+  }
+}

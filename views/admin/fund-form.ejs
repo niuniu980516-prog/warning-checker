@@ -1,0 +1,76 @@
+<%- include('../partials/head', { title: fund ? '編輯基金' : '新增基金', page: 'admin' }) %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary bg-opacity-10 fw-semibold">
+        <i class="bi bi-<%= fund ? 'pencil' : 'plus-lg' %> me-2"></i>
+        <%= fund ? '編輯基金' : '新增基金' %>
+      </div>
+      <div class="card-body p-4">
+
+        <% if (error) { %>
+          <div class="alert alert-danger"><%= error %></div>
+        <% } %>
+
+        <form method="POST" action="/admin/funds">
+          <% if (fund && fund.id) { %>
+            <input type="hidden" name="id" value="<%= fund.id %>">
+          <% } %>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">基金名稱 <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" required
+              value="<%= fund ? fund.name : '' %>"
+              placeholder="例：台積電科技創新基金">
+            <div class="form-text">請輸入基金完整名稱，用於上傳文宣時選擇對應基金。</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">成立日期 <span class="text-danger">*</span></label>
+            <input type="date" name="inception_date" class="form-control" required
+              value="<%= fund ? fund.inception_date : '' %>">
+            <div class="form-text">
+              成立日期用於計算基金年齡，判斷是否符合績效揭露資格（依規定成立未滿一年不得揭露績效）。
+            </div>
+          </div>
+
+          <% if (fund) {
+            const inceptionMs = new Date(fund.inception_date).getTime();
+            const nowMs = Date.now();
+            const diffDays = Math.floor((nowMs - inceptionMs) / 86400000);
+            const years = Math.floor(diffDays / 365);
+            const months = Math.floor((diffDays % 365) / 30);
+          %>
+          <div class="alert alert-info py-2 small">
+            <i class="bi bi-calendar-check me-1"></i>
+            目前成立年齡：<strong><%= years > 0 ? `${years} 年 ${months} 個月` : `${months} 個月` %></strong>
+            <% if (years < 1) { %>
+              ——<span class="text-warning fw-semibold">未滿一年，績效揭露受限</span>
+            <% } else { %>
+              ——已滿一年，可揭露績效
+            <% } %>
+          </div>
+          <% } %>
+
+          <div class="mb-4">
+            <div class="form-check">
+              <input type="checkbox" name="is_active" class="form-check-input" id="isActive"
+                <%= (!fund || fund.is_active) ? 'checked' : '' %>>
+              <label class="form-check-label fw-semibold" for="isActive">啟用此基金</label>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-check-lg me-1"></i>儲存
+            </button>
+            <a href="/admin/funds" class="btn btn-outline-secondary">取消</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

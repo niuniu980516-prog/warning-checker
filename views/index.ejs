@@ -1,0 +1,104 @@
+<%- include('partials/head', { title: '上傳文件', page: 'upload' }) %>
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-upload me-2"></i>上傳廣告文宣</h5>
+      </div>
+      <div class="card-body p-4">
+        <% if (error) { %>
+          <div class="alert alert-danger"><%= error %></div>
+        <% } %>
+
+        <form method="POST" action="/upload" enctype="multipart/form-data" id="uploadForm">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">選擇文件</label>
+            <input type="file" name="document" class="form-control form-control-lg"
+              accept=".doc,.docx,.ppt,.pptx,.pdf" required id="fileInput">
+            <div class="form-text">支援格式：Word（DOC/DOCX）、PowerPoint（PPT/PPTX）、PDF（最大 100MB）</div>
+          </div>
+
+          <% if (typeof funds !== 'undefined' && funds.length > 0) { %>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">對應基金 <span class="text-muted small fw-normal">（選填；選擇後系統可依成立日判斷績效揭露適用性）</span></label>
+            <select name="fund_id" class="form-select">
+              <option value="">— 不指定基金 —</option>
+              <% for (const f of funds) {
+                const diffDays = Math.floor((Date.now() - new Date(f.inception_date).getTime()) / 86400000);
+                const years = Math.floor(diffDays / 365);
+                const months = Math.floor((diffDays % 365) / 30);
+                const ageLabel = years > 0 ? `${years}年${months}個月` : `${months}個月`;
+              %>
+              <option value="<%= f.id %>"><%= f.name %> （成立 <%= ageLabel %>）</option>
+              <% } %>
+            </select>
+          </div>
+          <% } %>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">廣告類型 <span class="text-danger">*</span> <span class="text-muted small fw-normal">（可複選；僅執行符合所選類型的檢查項目）</span></label>
+            <div class="border rounded p-2" id="adTypesGroup">
+              <% (typeof adTypes !== 'undefined' ? adTypes : []).forEach((t, i) => { %>
+              <div class="form-check">
+                <input class="form-check-input ad-type-checkbox" type="checkbox" name="ad_types" value="<%= t %>" id="adType<%= i %>">
+                <label class="form-check-label" for="adType<%= i %>"><%= t %></label>
+              </div>
+              <% }) %>
+            </div>
+            <div class="form-text">請至少勾選一項廣告類型。</div>
+            <div id="adTypesError" class="text-danger small mt-1 d-none">請至少勾選一項廣告類型</div>
+          </div>
+
+          <div id="fileInfo" class="alert alert-info py-2 d-none">
+            <i class="bi bi-file-earmark me-2"></i><span id="fileName"></span>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 btn-lg" id="submitBtn">
+            <i class="bi bi-play-circle me-1"></i>開始檢查
+          </button>
+        </form>
+
+        <div id="uploading" class="text-center py-3 d-none">
+          <div class="spinner-border text-primary mb-2"></div>
+          <p class="mb-0">上傳中，請稍候…</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3 shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title"><i class="bi bi-info-circle me-1 text-info"></i>說明</h6>
+        <ul class="mb-0 small text-muted">
+          <li>系統將自動對廣告文宣進行程式及 AI 合規檢查</li>
+          <li>完成後可下載：填寫完成的檢查表 + 標注違規的文件</li>
+          <li>上傳後即可離開頁面，檢查結果將保留 30 天</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('fileInput').addEventListener('change', function() {
+  const file = this.files[0];
+  if (file) {
+    document.getElementById('fileName').textContent = file.name + ' (' + (file.size/1024/1024).toFixed(2) + ' MB)';
+    document.getElementById('fileInfo').classList.remove('d-none');
+  }
+});
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+  const checked = document.querySelectorAll('.ad-type-checkbox:checked');
+  const adTypesError = document.getElementById('adTypesError');
+  if (checked.length === 0) {
+    e.preventDefault();
+    adTypesError.classList.remove('d-none');
+    document.getElementById('adTypesGroup').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  adTypesError.classList.add('d-none');
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitBtn').classList.add('d-none');
+  document.getElementById('uploading').classList.remove('d-none');
+});
+</script>
+<%- include('partials/foot') %>

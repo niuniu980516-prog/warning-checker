@@ -1,0 +1,67 @@
+name: warning-checker
+
+services:
+  app:
+    build: .
+    container_name: warning-checker-app
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Taipei
+      - NODE_ENV=production
+      - PORT=3005
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SESSION_SECRET=${SESSION_SECRET:-change-this-secret-in-production}
+      - FILE_RETENTION_DAYS=30
+      # Set LLM_PROVIDER=gemini to use Google Gemini for both text & vision checks
+      - LLM_PROVIDER=${LLM_PROVIDER:-claude}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - GEMINI_CONCURRENCY=${GEMINI_CONCURRENCY:-4}
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:7b}
+      - OLLAMA_VISION_MODEL=${OLLAMA_VISION_MODEL:-}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./data:/app/data
+    expose:
+      - "3005"
+    depends_on:
+      - ollama
+    networks:
+      - app-net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: warning-checker-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    # CPU-only (no GPU). Remove the next 2 lines if you have NVIDIA GPU
+    environment:
+      - TZ=Asia/Taipei
+      - OLLAMA_NUM_GPU=0
+    networks:
+      - app-net
+
+  nginx:
+    image: nginx:alpine
+    container_name: warning-checker-nginx
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Taipei
+    ports:
+      - "3005:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    networks:
+      - app-net
+
+volumes:
+  ollama_data:
+
+networks:
+  app-net:
+    driver: bridge

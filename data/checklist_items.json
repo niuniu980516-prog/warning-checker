@@ -1,0 +1,319 @@
+[
+  {
+    "id": "perf_source",
+    "category": "基金績效及業績數字之表達",
+    "description": "任何基金績效及業績數字均需註明使用資料來源及日期",
+    "checkType": "auto",
+    "checkMethod": "conditional_warning",
+    "condition": {
+      "triggers": ["績效", "報酬率", "排名"],
+      "required": ["資料來源", "Lipper", "晨星", "嘉實", "彭博", "Bloomberg", "公會"],
+      "warningText": "刊載績效/報酬率/排名時，須同時標註資料來源（公會/Lipper/晨星/嘉實/彭博）及日期"
+    }
+  },
+  {
+    "id": "perf_period",
+    "category": "基金績效及業績數字之表達",
+    "description": "基金績效期間及揭露規範（成立未滿3年/滿3年/年度績效等）",
+    "checkType": "ai",
+    "aiCategory": "performance"
+  },
+  {
+    "id": "perf_highlight",
+    "category": "基金績效及業績數字之表達",
+    "description": "績效數值或排名不得以特別標識、劃線、不同顏色、放大、粗體等方式加以強調",
+    "checkType": "ai",
+    "aiCategory": "performance"
+  },
+  {
+    "id": "investment_strategy",
+    "category": "投資策略及標的",
+    "description": "投資策略或投資標的應與信託契約或發行計畫內容一致",
+    "checkType": "ai",
+    "aiCategory": "content"
+  },
+  {
+    "id": "no_gift_incentive",
+    "category": "避免不當方式勸誘",
+    "description": "不可提供贈品、招待券或將收入作為公益捐贈之方式勸誘他人開戶或購買基金",
+    "checkType": "auto",
+    "checkMethod": "forbidden_keywords",
+    "params": {
+      "keywords": ["贈品", "招待券", "公益捐贈", "刷卡禮", "好禮"],
+      "warningText": "出現疑似以贈品/招待券勸誘投資之用詞"
+    }
+  },
+  {
+    "id": "warning_font_bold",
+    "category": "警語之標示",
+    "description": "警語字體不可為該份文宣最小字體，並應以粗體標示",
+    "checkType": "docx_format",
+    "aiCategory": "formatting"
+  },
+  {
+    "id": "warn_individual_stock",
+    "category": "警語之標示",
+    "description": "文章提及個股時，是否加註「個股與相關數據資料僅供說明之用，不代表投資決策之建議。」(粗體)(當頁文宣)",
+    "checkType": "auto",
+    "checkMethod": "conditional_warning",
+    "condition": {
+      "triggers": ["個股", "股票代號", "持股"],
+      "required": ["個股與相關數據資料僅供說明之用", "不代表投資決策之建議"],
+      "warningText": "提及個股，但未加註「個股與相關數據資料僅供說明之用，不代表投資決策之建議。」警語"
+    }
+  },
+  {
+    "id": "warn_performance_example",
+    "category": "警語之標示",
+    "description": "內文數值或圖表明顯聯想到基金績效之保證，是否加註「以上資料為舉例說明，不代表未來實際績效。」",
+    "checkType": "auto",
+    "checkMethod": "conditional_warning",
+    "condition": {
+      "triggers": ["舉例", "例如", "假設"],
+      "required": ["以上資料為舉例說明", "不代表未來實際績效"],
+      "warningText": "文中有舉例/假設情境，但未加註「以上資料為舉例說明，不代表未來實際績效。」警語"
+    }
+  },
+  {
+    "id": "warn_dca",
+    "category": "警語之標示",
+    "description": "投資方法論(含好利high定時定額及複合投資法等)是否加註「投資人因不同時間進場，將有不同之投資績效，過去之績效亦不代表未來績效之保證。」",
+    "checkType": "auto",
+    "checkMethod": "conditional_warning",
+    "condition": {
+      "triggers": ["定時定額", "複合投資", "好利"],
+      "required": ["不同時間進場", "不代表未來績效之保證"],
+      "warningText": "提及定時定額/複合投資法，但未加註相關投資績效警語"
+    }
+  },
+  {
+    "id": "warn_dividend_ad",
+    "category": "警語之標示",
+    "description": "以基金配息率或配息金額為廣告者，是否加註「基金配息不代表基金實際報酬，且過去配息不代表未來配息；基金淨值可能因市場因素而上下波動。」",
+    "checkType": "auto",
+    "checkMethod": "conditional_warning",
+    "condition": {
+      "triggers": ["配息率", "配息金額", "月配", "季配", "年配", "分配收益"],
+      "required": ["基金配息不代表基金實際報酬", "過去配息不代表未來配息"],
+      "warningText": "以配息為廣告訴求，但未加註「基金配息不代表基金實際報酬，且過去配息不代表未來配息」警語"
+    }
+  },
+  {
+    "id": "warn_economic_forecast",
+    "category": "警語之標示",
+    "description": "提及投資範圍或市場之經濟走勢預測時，是否加註「本文提及之經濟走勢預測不必然代表本基金之績效，本基金投資風險請詳閱基金公開說明書」",
+    "checkType": "auto",
+    "checkMethod": "conditional_warning",
+    "condition": {
+      "triggers": ["經濟走勢", "市場預測", "展望", "預期"],
+      "required": ["經濟走勢預測不必然代表本基金之績效"],
+      "warningText": "文中有市場/經濟走勢預測，但未加註「本文提及之經濟走勢預測不必然代表本基金之績效...」警語"
+    }
+  },
+  {
+    "id": "warn_investment_target",
+    "category": "警語之標示",
+    "description": "提及基金投資資產或標的之資訊時，是否加註「投資人申購本基金係持有基金受益憑證，而非本文提及之投資資產或標的。」",
+    "checkType": "auto",
+    "checkMethod": "conditional_warning",
+    "condition": {
+      "triggers": ["投資標的", "投資資產", "持有"],
+      "required": ["投資人申購本基金係持有基金受益憑證"],
+      "warningText": "提及投資資產或標的，但未加註「投資人申購本基金係持有基金受益憑證，而非本文提及之投資資產或標的。」警語"
+    }
+  },
+  {
+    "id": "warn_leverage",
+    "category": "警語之標示",
+    "description": "提及基金之衍生性工具/證券相關商品等槓桿投資策略時，是否揭示相關警語",
+    "checkType": "auto",
+    "checkMethod": "conditional_warning",
+    "condition": {
+      "triggers": ["衍生性工具", "選擇權", "期貨", "槓桿"],
+      "required": ["衍生性工具", "槓桿投資策略", "投資風險"],
+      "warningText": "提及衍生性工具/槓桿策略，但未加註相關風險警語"
+    }
+  },
+  {
+    "id": "warn_etf_index",
+    "category": "警語之標示",
+    "description": "以ETF追蹤指數之績效或殖利率為廣告時，應揭示相關警語",
+    "checkType": "auto",
+    "checkMethod": "conditional_warning",
+    "condition": {
+      "triggers": ["ETF追蹤指數", "追蹤指數績效", "指數殖利率"],
+      "required": ["不代表本ETF基金之實際報酬率", "ETF追蹤指數績效"],
+      "warningText": "以ETF追蹤指數績效/殖利率為廣告，但未加註「以上僅為ETF追蹤指數績效或殖利率之表現，不代表本ETF基金之實際報酬率...」警語"
+    }
+  },
+  {
+    "id": "warn_simulation",
+    "category": "警語之標示",
+    "description": "使用歷史資料模擬時，應加註「以上僅為歷史資料模擬回測結果，不代表本基金之未來績效保證...」",
+    "checkType": "auto",
+    "checkMethod": "conditional_warning",
+    "condition": {
+      "triggers": ["模擬", "回測", "歷史資料模擬"],
+      "required": ["歷史資料模擬回測結果", "不代表本基金之未來績效保證"],
+      "warningText": "文中有模擬/回測內容，但未加註「以上僅為歷史資料模擬回測結果，不代表本基金之未來績效保證...」警語"
+    }
+  },
+  {
+    "id": "warn_paid_placement",
+    "category": "警語之標示",
+    "description": "於第三方刊物/平台/媒體進行付費置入性行銷時，應於廣告內容明顯揭露「復華投信廣告文宣」或「復華投信行銷資訊」或「復華投信贊助播出」",
+    "checkType": "ai",
+    "aiCategory": "warning"
+  },
+  {
+    "id": "fund_name_annotation",
+    "category": "警語之標示",
+    "description": "特定基金名稱後方（含圖表）每次須加註對應之風險說明文字（粗體或顯著顏色及相同大小字體）",
+    "checkType": "auto",
+    "checkMethod": "fund_annotation",
+    "params": {}
+  },
+  {
+    "id": "no_guarantee_words",
+    "category": "不可保證獲利",
+    "description": "不可有類似保證獲利之字眼（保本、穩賺、優於定存、打敗通膨、政府擔保等）",
+    "checkType": "auto",
+    "checkMethod": "forbidden_keywords",
+    "params": {
+      "keywords": ["保本", "穩賺", "優於定存", "打敗通膨", "政府擔保", "保證獲利", "保證收益"],
+      "warningText": "出現類似保證獲利之字眼"
+    }
+  },
+  {
+    "id": "no_steady_word",
+    "category": "不可保證獲利",
+    "description": "敘述基金績效收益時，不可使用「穩健」用詞",
+    "checkType": "auto",
+    "checkMethod": "forbidden_keywords",
+    "params": {
+      "keywords": ["穩健收益", "穩健報酬", "穩健績效", "穩健獲利"],
+      "warningText": "使用「穩健」描述基金績效/收益"
+    }
+  },
+  {
+    "id": "no_predict_performance",
+    "category": "不可保證獲利",
+    "description": "不可預測基金投資績效（例如目標報酬率4%~6%）",
+    "checkType": "auto",
+    "checkMethod": "forbidden_keywords",
+    "params": {
+      "keywords": ["目標報酬率", "目標收益率", "預期報酬"],
+      "warningText": "出現預測基金投資績效之用詞（目標報酬率/預期報酬等）"
+    }
+  },
+  {
+    "id": "no_predicted_dividend",
+    "category": "不可保證獲利",
+    "description": "不可揭露基金預估配息金額、預估配息率、預估殖利率",
+    "checkType": "auto",
+    "checkMethod": "forbidden_keywords",
+    "params": {
+      "keywords": ["預估配息", "預期配息", "預計配息"],
+      "warningText": "揭露預估/預期配息相關資訊"
+    }
+  },
+  {
+    "id": "no_annualized_dividend",
+    "category": "不可保證獲利",
+    "description": "不得揭示年化配息率或年化配息金額",
+    "checkType": "auto",
+    "checkMethod": "forbidden_keywords",
+    "params": {
+      "keywords": ["年化配息率", "年化配息金額", "年化分配率"],
+      "warningText": "揭示年化配息率或年化配息金額"
+    }
+  },
+  {
+    "id": "no_risk_balance",
+    "category": "不可保證獲利",
+    "description": "以獲利、配息率、配息金額、ETF追蹤指數績效或殖利率為廣告時，應同時報導其風險以作為平衡報導",
+    "checkType": "ai",
+    "aiCategory": "content"
+  },
+  {
+    "id": "no_sales_ranking",
+    "category": "其他",
+    "description": "不得以基金銷售排行之方式為廣告",
+    "checkType": "auto",
+    "checkMethod": "forbidden_keywords",
+    "params": {
+      "keywords": ["銷售排行", "銷售冠軍", "買氣No.1", "買氣第一"],
+      "warningText": "以基金銷售排行為廣告訴求"
+    }
+  },
+  {
+    "id": "no_pressure_tactics",
+    "category": "其他",
+    "description": "不可以「募爆」、「下架」、「暫停申購」、「額度有限」等字眼誘導購買基金",
+    "checkType": "auto",
+    "checkMethod": "forbidden_keywords",
+    "params": {
+      "keywords": ["募爆", "下架", "額度有限", "限額", "搶購", "即將額滿"],
+      "warningText": "使用「募爆/下架/額度有限」等誘導性字眼"
+    }
+  },
+  {
+    "id": "no_fund_manager_promo",
+    "category": "其他",
+    "description": "不可以基金經理人作為宣傳廣告訴求或標題",
+    "checkType": "ai",
+    "aiCategory": "content"
+  },
+  {
+    "id": "no_absolute_return",
+    "category": "其他",
+    "description": "不可使用「追求*%報酬率、*%年報酬率、絕對報酬率」等相關類似字眼",
+    "checkType": "auto",
+    "checkMethod": "forbidden_keywords",
+    "params": {
+      "keywords": ["追求絕對報酬", "絕對報酬率"],
+      "warningText": "使用「絕對報酬率/追求絕對報酬」等字眼"
+    }
+  },
+  {
+    "id": "company_info",
+    "category": "其他",
+    "description": "為推廣業務之廣告文件，需列明公司名稱、地址及電話",
+    "checkType": "auto",
+    "checkMethod": "required_text",
+    "params": {
+      "required": ["復華投信", "投信"],
+      "warningText": "廣告文件未見公司名稱（復華投信）"
+    }
+  },
+  {
+    "id": "general_warning_present",
+    "category": "警語之標示",
+    "description": "文宣最後應有基本警語：「投資一定有風險，基金投資有賺有賠，申購前應詳閱公開說明書」或完整文宣綜合警語",
+    "checkType": "auto",
+    "checkMethod": "required_text",
+    "params": {
+      "required": ["投資一定有風險", "基金投資有賺有賠", "申購前應詳閱"],
+      "warningText": "文宣末未見基本警語「投資一定有風險，基金投資有賺有賠，申購前應詳閱公開說明書」"
+    }
+  },
+  {
+    "id": "simulate_only_quant",
+    "category": "基金模擬",
+    "description": "模擬績效僅適用於採數量模型操作（須有載於基金公開說明書中）之基金",
+    "checkType": "ai",
+    "aiCategory": "simulation"
+  },
+  {
+    "id": "simulate_warning",
+    "category": "基金模擬",
+    "description": "使用模擬績效時，應加註「以上僅為歷史資料模擬回測結果，不代表本基金之未來績效保證，不同時間進行模擬操作，其結果亦可能不同。」",
+    "checkType": "auto",
+    "checkMethod": "conditional_warning",
+    "condition": {
+      "triggers": ["模擬績效", "回測結果", "模擬操作"],
+      "required": ["歷史資料模擬回測結果", "不代表本基金之未來績效保證"],
+      "warningText": "使用模擬績效廣告，但未加註規定的模擬警語"
+    }
+  }
+]

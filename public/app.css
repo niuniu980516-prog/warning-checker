@@ -1,0 +1,166 @@
+/* ── 復華投信品牌色彩 ─────────────────────────────────────────── */
+:root {
+  --fh-red:        #A61927;
+  --fh-red-dark:   #7D1220;
+  --fh-red-light:  #C41E32;
+  --fh-red-pale:   #F9ECEE;
+  --fh-beige:      #F5F3EF;
+  --fh-text:       #2C2C2C;
+  --fh-muted:      #6C757D;
+  --fh-border:     #DCDCDC;
+
+  /* Override Bootstrap primary */
+  --bs-primary:          #A61927;
+  --bs-primary-rgb:      166, 25, 39;
+  --bs-link-color:       #A61927;
+  --bs-link-hover-color: #7D1220;
+}
+
+/* ── Base ──────────────────────────────────────────────────────── */
+body {
+  background-color: #F7F6F4;
+  font-family: 'Microsoft JhengHei', 'PingFang TC', 'Segoe UI', sans-serif;
+  color: var(--fh-text);
+  font-size: 0.92rem;
+}
+
+/* ── Navbar ────────────────────────────────────────────────────── */
+.navbar {
+  background-color: #FFFFFF !important;
+  border-bottom: 3px solid var(--fh-red);
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.navbar-brand {
+  color: var(--fh-red) !important;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+.navbar-brand i {
+  color: var(--fh-red);
+}
+.navbar-nav .nav-link {
+  color: var(--fh-text) !important;
+  font-weight: 500;
+  padding: 0.5rem 0.85rem;
+}
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+  color: var(--fh-red) !important;
+  border-bottom: 2px solid var(--fh-red);
+}
+.navbar-nav .dropdown-item:hover {
+  background-color: var(--fh-red-pale);
+  color: var(--fh-red);
+}
+.navbar-toggler {
+  border-color: var(--fh-red);
+}
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23A61927' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* ── Buttons ───────────────────────────────────────────────────── */
+.btn-primary {
+  background-color: var(--fh-red);
+  border-color: var(--fh-red);
+  color: #fff;
+}
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--fh-red-dark);
+  border-color: var(--fh-red-dark);
+  color: #fff;
+}
+.btn-outline-primary {
+  color: var(--fh-red);
+  border-color: var(--fh-red);
+}
+.btn-outline-primary:hover {
+  background-color: var(--fh-red);
+  border-color: var(--fh-red);
+  color: #fff;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────── */
+.card {
+  border: 1px solid var(--fh-border);
+  border-radius: 4px;
+  background: #fff;
+}
+.card-header {
+  border-bottom: 1px solid var(--fh-border);
+  padding: 0.65rem 1rem;
+  font-size: 0.92rem;
+}
+.card-header.bg-primary,
+.card-header.bg-primary.bg-opacity-10 {
+  background-color: var(--fh-red) !important;
+  color: #fff;
+}
+
+/* ── Tables ────────────────────────────────────────────────────── */
+.table th {
+  font-weight: 600;
+  font-size: 0.83rem;
+  color: #fff;
+  background-color: var(--fh-red);
+}
+.table td {
+  font-size: 0.88rem;
+  vertical-align: middle;
+}
+.table-hover tbody tr:hover {
+  background-color: var(--fh-red-pale);
+}
+.table-light th {
+  background-color: var(--fh-beige) !important;
+  color: var(--fh-text) !important;
+}
+
+/* ── Badges ────────────────────────────────────────────────────── */
+.badge.bg-primary { background-color: var(--fh-red) !important; }
+.badge.bg-success { background-color: #2E7D32 !important; }
+.badge.bg-danger  { background-color: #C62828 !important; }
+
+/* ── Summary stat cards ────────────────────────────────────────── */
+.display-6 {
+  font-size: 1.9rem;
+  font-weight: 700;
+}
+
+/* ── Category headers in result table ─────────────────────────── */
+.card-header.bg-primary.bg-opacity-10 {
+  background-color: var(--fh-red) !important;
+  color: #fff !important;
+}
+
+/* ── Admin category headers ────────────────────────────────────── */
+.card-header.bg-warning.bg-opacity-10 {
+  background-color: #FEF3CD !important;
+  color: var(--fh-text) !important;
+  border-left: 3px solid var(--fh-red);
+}
+
+/* ── Alerts ─────────────────────────────────────────────────────── */
+.alert-success { border-color: #A5D6A7; background: #E8F5E9; }
+.alert-danger  { border-color: #FFCDD2; background: #FFEBEE; }
+
+/* ── Failed row highlight ──────────────────────────────────────── */
+tr.table-danger td {
+  background-color: #FFF3F4 !important;
+}
+
+/* ── Login page ─────────────────────────────────────────────────── */
+.login-card-title {
+  color: var(--fh-red);
+}
+
+/* ── Links ──────────────────────────────────────────────────────── */
+a { color: var(--fh-red); }
+a:hover { color: var(--fh-red-dark); }
+
+/* ── Font ───────────────────────────────────────────────────────── */
+.font-monospace { font-size: 0.83rem; }
+
+/* ── Spinner color ──────────────────────────────────────────────── */
+.spinner-border.text-primary { color: var(--fh-red) !important; }

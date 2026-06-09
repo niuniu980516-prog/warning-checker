@@ -1,0 +1,279 @@
+<%- include('partials/head', { title: '檢查結果', page: 'history' }) %>
+
+<%
+const statusLabel = { processing: '處理中', completed: '完成', failed: '失敗' };
+const statusClass = { processing: 'warning', completed: 'success', failed: 'danger' };
+%>
+
+<div class="row mb-3">
+  <div class="col-12 d-flex align-items-start justify-content-between flex-wrap gap-2">
+    <div>
+      <h5 class="mb-1 fw-bold">
+        <i class="bi bi-file-earmark-text me-1" style="color:var(--fh-red)"></i>
+        <%= session.original_filename %>
+      </h5>
+      <span class="badge bg-<%= statusClass[session.status] || 'secondary' %>">
+        <%= statusLabel[session.status] || session.status %>
+      </span>
+      <span class="text-muted ms-2" style="font-size:.85rem">
+        <%= formatDateTime(session.created_at) %>
+      </span>
+    </div>
+    <% if (session.status === 'completed') { %>
+    <div class="d-flex gap-2">
+      <a href="/results/<%= session.id %>/download/checklist" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-download me-1"></i>下載檢查表
+      </a>
+      <a href="/results/<%= session.id %>/download/annotated" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-file-earmark-arrow-down me-1"></i>下載標注文件
+      </a>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Processing state -->
+<% if (session.status === 'processing') { %>
+<div class="card">
+  <div class="card-body text-center py-5">
+    <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem"></div>
+    <h5>AI 正在檢查文件中，請稍候…</h5>
+    <p class="text-muted mb-0">通常需要 1–3 分鐘，頁面將自動重新整理</p>
+  </div>
+</div>
+<script>setTimeout(() => location.reload(), 5000);</script>
+
+<!-- Failed state -->
+<% } else if (session.status === 'failed') { %>
+<div class="alert alert-danger">
+  <i class="bi bi-x-circle me-2"></i>
+  <strong>處理失敗：</strong><%= session.error_message || '未知錯誤' %>
+</div>
+<% if (session.error_message && session.error_message.includes('圖片掃描')) { %>
+<div class="alert alert-warning mt-2">
+  <i class="bi bi-lightbulb me-2"></i>
+  <strong>建議：</strong>請使用 Adobe Acrobat 或 Word 開啟原始文件後「另存新檔」為含文字層的 PDF，或直接上傳 Word（.docx）版本。
+</div>
+<% } %>
+
+<!-- Completed state -->
+<% } else if (session.status === 'completed' && results) { %>
+
+<!-- OCR notice -->
+<% if (session.ocr_used) { %>
+<div class="alert alert-info py-2 mb-2" style="font-size:.85rem">
+  <i class="bi bi-eye me-2"></i>此文件為圖片型 PDF，已使用 OCR 自動辨識文字。辨識結果可能有誤，請人工核對重要項目。
+</div>
+<% } %>
+
+<!-- Summary bar -->
+<% if (summary) { %>
+<div class="card mb-3" style="border-left:4px solid var(--fh-red)">
+  <div class="card-body py-2 d-flex align-items-center flex-wrap gap-3">
+    <span class="fw-bold" style="color:var(--fh-red)">檢查結果摘要</span>
+    <span class="text-muted">共 <strong><%= summary.total %></strong> 項</span>
+    <span class="text-success fw-bold">✓ 通過 <%= summary.passed %> 項</span>
+    <span class="text-danger fw-bold">✗ 不符合 <%= summary.failed %> 項</span>
+    <span class="text-secondary">不適用 <%= summary.skipped %> 項</span>
+    <% if (summary.errors > 0) { %>
+    <span class="text-warning">⚠ 未檢查 <%= summary.errors %> 項</span>
+    <% } %>
+  </div>
+</div>
+<% } %>
+
+<!-- Filter -->
+<div class="mb-2 d-flex gap-1 flex-wrap">
+  <button class="btn btn-sm btn-outline-secondary active" onclick="filterItems('all',this)">全部</button>
+  <button class="btn btn-sm btn-outline-danger"    onclick="filterItems('fail',this)">不符合</button>
+  <button class="btn btn-sm btn-outline-success"   onclick="filterItems('pass',this)">通過</button>
+  <button class="btn btn-sm btn-outline-secondary" onclick="filterItems('skip',this)">不適用</button>
+  <button class="btn btn-sm btn-outline-warning"   onclick="filterItems('error',this)">未檢查</button>
+</div>
+
+<!-- Checklist table — flat list, no category grouping -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-bordered table-sm align-middle mb-0" id="checkTable" style="font-size:.85rem">
+      <thead>
+        <tr style="background:var(--fh-red);color:#fff">
+          <th style="width:40px;text-align:center">#</th>
+          <th style="width:130px;min-width:100px">類別</th>
+          <th>內容</th>
+          <th style="width:80px;text-align:center">自行檢核</th>
+          <th style="width:70px;text-align:center">備　　註</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% let rowNum = 0; %>
+      <% for (const r of results) { %>
+      <%
+        rowNum++;
+        const res = r.result || {};
+        const isPassed  = res.pass === true  && !res.skipped;
+        const isFailed  = res.pass === false && !res.skipped;
+        const isSkipped = !!res.skipped && !res.error;
+        const isError   = !isPassed && !isFailed && !isSkipped;
+        const dataStatus = isFailed ? 'fail' : isPassed ? 'pass' : isSkipped ? 'skip' : 'error';
+        const rowBg = isFailed ? '#FFF3F4' : isPassed ? '#F3FBF4' : '';
+      %>
+      <tr data-status="<%= dataStatus %>" style="background:<%= rowBg %>">
+        <!-- # -->
+        <td class="text-center text-muted" style="font-size:.78rem"><%= rowNum %></td>
+        <!-- 類別 -->
+        <td class="text-muted" style="font-size:.78rem;vertical-align:top"><%= r.category %></td>
+        <!-- 內容 -->
+        <td>
+          <div><%= r.description %></div>
+          <% if (isFailed) { %>
+            <div class="mt-1 text-danger fw-semibold" style="font-size:.82rem">❌ <%= res.violation %></div>
+            <% if (res.details && res.details !== res.violation) { %>
+            <div class="text-danger mt-1" style="font-size:.82rem"><%= res.details %></div>
+            <% } %>
+            <% if (res.pages && res.pages.length > 0) { %>
+            <div class="text-muted mt-1" style="font-size:.78rem">位置：第 <%= res.pages.join('、') %> 頁</div>
+            <% } %>
+          <% } else if (isSkipped) { %>
+            <div class="text-muted mt-1" style="font-size:.82rem">不適用：<%= res.reason || '先決條件不符' %></div>
+          <% } else if (isError) { %>
+            <div class="text-muted mt-1" style="font-size:.78rem">AI 未檢查<% if(res.error){ %>：<%= res.error %><% } %></div>
+          <% } else if (isPassed) { %>
+            <% if (res.reason) { %>
+            <div class="text-success mt-1" style="font-size:.82rem"><%= res.reason %></div>
+            <% } %>
+          <% } %>
+        </td>
+        <!-- 自行檢核 -->
+        <td class="text-center fw-bold" style="font-size:1.1rem">
+          <% if (isPassed) { %>
+            <span class="text-success">✓</span>
+          <% } else if (isFailed) { %>
+            <span class="text-danger">✗</span>
+          <% } else if (isSkipped) { %>
+            <span class="text-muted" style="font-size:.8rem">不適用</span>
+          <% } else { %>
+            <span class="text-muted" style="font-size:.8rem" title="<%= res.error || '未執行' %>">—</span>
+          <% } %>
+        </td>
+        <!-- 備註 -->
+        <td class="text-center text-muted" style="font-size:.78rem">
+          <% if (res.pages && res.pages.length > 0) { %>第<%= res.pages.join(',') %>頁<% } %>
+        </td>
+      </tr>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<% } %>
+
+<!-- Fund annotation detail card -->
+<% if (fundDetail && fundDetail.length > 0) { %>
+<div class="card mt-3">
+  <div class="card-header fw-semibold d-flex align-items-center gap-2" style="background:var(--fh-beige);border-left:4px solid var(--fh-red)">
+    <i class="bi bi-shield-check" style="color:var(--fh-red)"></i>
+    基金警語逐項檢查
+    <span class="ms-auto badge bg-secondary"><%= fundDetail.length %> 支基金</span>
+  </div>
+  <%
+    const matchModeLabel = { after: '緊接基金名稱之後', same_page: '基金名稱當頁', document_end: '文宣最後', anywhere: '全文任意處' };
+  %>
+  <div class="table-responsive">
+    <table class="table table-sm table-bordered align-middle mb-0" style="font-size:.85rem">
+      <thead class="table-light">
+        <tr>
+          <th style="width:180px">基金名稱</th>
+          <th style="width:150px">警語項目</th>
+          <th style="width:60px;text-align:center">結果</th>
+          <th>核對說明</th>
+          <th style="width:80px;text-align:center">所在頁</th>
+        </tr>
+      </thead>
+      <tbody>
+      <% for (const f of fundDetail) { %>
+        <% if (f.items.length === 0) { %>
+        <tr style="background:#FBFBF8">
+          <td>
+            <span class="fw-semibold"><%= f.fund_name %></span>
+            <% if (f.found_as !== f.fund_name) { %>
+            <div class="text-muted" style="font-size:.78rem">（以「<%= f.found_as %>」出現）</div>
+            <% } %>
+          </td>
+          <td colspan="4" class="text-muted" style="font-size:.8rem">本基金未設定警語項目</td>
+        </tr>
+        <% } %>
+        <% f.items.forEach((it, iIdx) => { %>
+        <%
+          const itIssues = it.issues || [];
+          const itChecks = it.checks || [];
+          const hasIssue = itIssues.length > 0 || it.ok === false;
+          const rowBg = hasIssue ? '#FFF3F4' : '#F3FBF4';
+        %>
+        <tr style="background:<%= rowBg %>">
+          <% if (iIdx === 0) { %>
+          <td rowspan="<%= f.items.length %>" style="background:#fff;vertical-align:top">
+            <span class="fw-semibold"><%= f.fund_name %></span>
+            <% if (f.found_as !== f.fund_name) { %>
+            <div class="text-muted" style="font-size:.78rem">（以「<%= f.found_as %>」出現）</div>
+            <% } %>
+            <% if (f.pages && f.pages.length > 0) { %>
+            <div class="text-muted" style="font-size:.72rem">基金名稱出現於第 <%= f.pages.join('、') %> 頁</div>
+            <% } %>
+          </td>
+          <% } %>
+          <td>
+            <span class="badge bg-light text-dark border" style="font-size:.74rem"><%= it.name %></span>
+            <% if (it.match_mode && matchModeLabel[it.match_mode]) { %>
+            <div class="text-muted" style="font-size:.68rem"><%= matchModeLabel[it.match_mode] %></div>
+            <% } %>
+          </td>
+          <td class="text-center fw-bold" style="font-size:1rem">
+            <span class="<%= it.ok ? 'text-success' : 'text-danger' %>"><%= it.ok ? '✓' : '✗' %></span>
+          </td>
+          <td>
+            <% if (itIssues.length > 0) { %>
+              <% for (const issue of itIssues) { %>
+              <div class="text-danger" style="font-size:.82rem">❌ <%= issue %></div>
+              <% } %>
+            <% } else if (it.ok) { %>
+              <div class="text-success" style="font-size:.82rem">✓ 符合規定</div>
+            <% } %>
+            <% if (it.format && it.format.pass === null) { %>
+            <div class="text-muted" style="font-size:.7rem">（格式需視覺確認）</div>
+            <% } %>
+            <% if (itChecks.length > 0) { %>
+            <details class="mt-1">
+              <summary class="text-muted" style="font-size:.76rem;cursor:pointer">已核對項目（<%= itChecks.length %>）</summary>
+              <% for (const c of itChecks) { %>
+              <div class="text-muted" style="font-size:.76rem">・<%= c %></div>
+              <% } %>
+            </details>
+            <% } %>
+          </td>
+          <td class="text-center text-muted" style="font-size:.78rem">
+            <%= it.pages && it.pages.length > 0 ? '第' + it.pages.join('、') + '頁' : '—' %>
+          </td>
+        </tr>
+        <% }) %>
+      <% } %>
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer text-muted" style="font-size:.76rem">
+    每一種警語項目單獨列一條，並標示其所在頁。✓／✗：依文宣內容自動核對該筆警語結果　展開「已核對項目」可查看詳細核對內容　「格式需視覺確認」表示 PDF/PPT 等格式需另由視覺版面檢查確認
+  </div>
+</div>
+<% } %>
+
+<script>
+function filterItems(type, btn) {
+  document.querySelectorAll('#checkTable tbody tr[data-status]').forEach(row => {
+    row.style.display = (type === 'all' || row.dataset.status === type) ? '' : 'none';
+  });
+  document.querySelectorAll('[onclick^="filterItems"]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+
+<%- include('partials/foot') %>

@@ -1,0 +1,75 @@
+<%- include('../partials/head', { title: '使用者管理', page: 'admin' }) %>
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <h4 class="mb-0"><i class="bi bi-people me-2"></i>使用者管理</h4>
+  <a href="/admin/users/new" class="btn btn-primary">
+    <i class="bi bi-person-plus me-1"></i>新增使用者
+  </a>
+</div>
+
+<% if (saved) { %>
+<div class="alert alert-success alert-dismissible fade show py-2">
+  <i class="bi bi-check-circle me-2"></i>儲存成功
+  <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>帳號</th>
+          <th>角色</th>
+          <th>狀態</th>
+          <th>建立時間</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (const u of users) { %>
+        <tr class="<%= u.is_active ? '' : 'table-secondary opacity-50' %>">
+          <td>
+            <i class="bi bi-person-circle me-1 text-muted"></i>
+            <strong><%= u.username %></strong>
+          </td>
+          <td>
+            <span class="badge bg-<%= u.role === 'admin' ? 'primary' : 'secondary' %>">
+              <%= u.role === 'admin' ? '管理員' : '一般使用者' %>
+            </span>
+          </td>
+          <td>
+            <span class="badge bg-<%= u.is_active ? 'success' : 'secondary' %>">
+              <%= u.is_active ? '啟用' : '停用' %>
+            </span>
+          </td>
+          <td class="small text-muted">
+            <%= formatDateTime(u.created_at) %>
+          </td>
+          <td class="text-end">
+            <a href="/admin/users/<%= u.id %>/edit" class="btn btn-sm btn-outline-secondary me-1">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <form method="POST" action="/admin/users/<%= u.id %>/toggle" class="d-inline">
+              <button type="submit" class="btn btn-sm btn-outline-<%= u.is_active ? 'warning' : 'success' %> me-1"
+                title="<%= u.is_active ? '停用' : '啟用' %>">
+                <i class="bi bi-toggle-<%= u.is_active ? 'on' : 'off' %>"></i>
+              </button>
+            </form>
+            <% if (u.id !== user.id) { %>
+            <form method="POST" action="/admin/users/<%= u.id %>/delete" class="d-inline"
+              onsubmit="return confirm('確定要刪除使用者「<%= u.username %>」？')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+            <% } %>
+          </td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

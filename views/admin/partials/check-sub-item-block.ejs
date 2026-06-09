@@ -1,0 +1,167 @@
+<div class="sub-item-block border rounded p-3 mb-3" data-idx="<%= idx %>">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="mb-0 fw-semibold"><i class="bi bi-list-ul me-1"></i>子檢查項目 <span class="sub-item-number"><%= typeof idx === 'number' ? idx + 1 : '' %></span></h6>
+    <button type="button" class="btn btn-sm btn-outline-danger remove-sub-item-btn" <%= removable ? '' : 'style="display:none"' %>>
+      <i class="bi bi-trash me-1"></i>移除此子項目
+    </button>
+  </div>
+
+  <input type="hidden" name="sub[<%= idx %>][id]" value="<%= sub.id %>">
+
+  <div class="mb-3">
+    <label class="form-label small text-muted mb-1">本子項目描述 <span class="text-muted">（選填，留空則沿用上方「檢查描述」）</span></label>
+    <textarea name="sub[<%= idx %>][description]" class="form-control" rows="2"
+      placeholder="當同一序號底下的子項目各自描述不同時才需填寫"><%= sub.description %></textarea>
+  </div>
+
+  <!-- 適用性判斷 -->
+  <div class="mb-3">
+    <label class="form-label fw-semibold mb-2">適用性判斷 <span class="text-muted small fw-normal">這項檢查在什麼情況下才需要進行？</span></label>
+    <div class="border rounded p-3">
+
+      <div class="form-check mb-2">
+        <input class="form-check-input applicability-mode-radio" type="radio" name="sub[<%= idx %>][applicability_mode]"
+          id="applicabilityModeAlways-<%= idx %>" value="always" <%= sub.applicability_mode === 'always' ? 'checked' : '' %>>
+        <label class="form-check-label fw-semibold" for="applicabilityModeAlways-<%= idx %>">一律適用</label>
+        <div class="text-muted" style="font-size:.8rem">不論文宣內容為何，每次檢查都會執行——直接進行合規性判斷，不做任何前提篩選</div>
+      </div>
+      <div class="applicability-panel applicability-panel-always ms-4 mt-1 mb-3 d-none"></div>
+
+      <div class="form-check">
+        <input class="form-check-input applicability-mode-radio" type="radio" name="sub[<%= idx %>][applicability_mode]"
+          id="applicabilityModeAi-<%= idx %>" value="ai" <%= sub.applicability_mode === 'ai' ? 'checked' : '' %>>
+        <label class="form-check-label fw-semibold" for="applicabilityModeAi-<%= idx %>">由 AI 判斷</label>
+        <div class="text-muted" style="font-size:.8rem">讓 AI 自行判斷文宣內容是否符合本項的適用前提</div>
+      </div>
+      <div class="applicability-panel applicability-panel-ai ms-4 mt-2 mb-3">
+        <div class="d-flex justify-content-between align-items-end">
+          <label class="form-label small text-muted mb-0">適用前提說明（選填，留空則一律適用）</label>
+          <button type="button" class="btn btn-sm btn-outline-primary ai-generate-btn" data-field="applicability_prompt" data-kind="applicability">
+            <i class="bi bi-stars me-1"></i>AI 生成
+          </button>
+        </div>
+        <textarea name="sub[<%= idx %>][applicability_prompt]" class="form-control mt-1" rows="2"
+          placeholder="例：文宣中是否有揭露基金績效數據（如報酬率、淨值走勢圖、績效排名等）"><%= sub.applicability_prompt %></textarea>
+      </div>
+
+      <div class="form-check">
+        <input class="form-check-input applicability-mode-radio" type="radio" name="sub[<%= idx %>][applicability_mode]"
+          id="applicabilityModeKeyword-<%= idx %>" value="keyword" <%= sub.applicability_mode === 'keyword' ? 'checked' : '' %>>
+        <label class="form-check-label fw-semibold" for="applicabilityModeKeyword-<%= idx %>">文宣中出現特定文字才適用</label>
+        <div class="text-muted" style="font-size:.8rem">不需要 AI 判斷——只要文宣中出現下列任一文字，本項就適用</div>
+      </div>
+      <div class="applicability-panel applicability-panel-keyword ms-4 mt-2">
+        <label class="form-label small text-muted mb-1">觸發文字（每行一個，出現任一個即適用）</label>
+        <textarea name="sub[<%= idx %>][applicability_keywords_text]" class="form-control" rows="3"
+          placeholder="保本&#10;穩賺&#10;高配息"><%= sub.applicabilityKeywordsText %></textarea>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 合規性判斷 -->
+  <div class="mb-3">
+    <label class="form-label fw-semibold mb-2">合規性判斷 <span class="text-muted small fw-normal">如何判定文宣內容是否符合規定？</span></label>
+    <div class="border rounded p-3">
+
+      <div class="form-check">
+        <input class="form-check-input compliance-mode-radio" type="radio" name="sub[<%= idx %>][compliance_mode]"
+          id="complianceModeAi-<%= idx %>" value="ai" <%= sub.compliance_mode === 'ai' ? 'checked' : '' %>>
+        <label class="form-check-label fw-semibold" for="complianceModeAi-<%= idx %>">由 AI 判斷</label>
+        <div class="text-muted" style="font-size:.8rem">讓 AI 依下方標準（或本子項目／上方「檢查描述」）評估文宣是否合規</div>
+      </div>
+      <div class="compliance-panel compliance-panel-ai ms-4 mt-2 mb-3">
+        <div class="d-flex justify-content-between align-items-end">
+          <label class="form-label small text-muted mb-0">合規判斷標準（選填，留空則使用本子項目／上方「檢查描述」）</label>
+          <button type="button" class="btn btn-sm btn-outline-primary ai-generate-btn" data-field="compliance_prompt" data-kind="compliance">
+            <i class="bi bi-stars me-1"></i>AI 生成
+          </button>
+        </div>
+        <textarea name="sub[<%= idx %>][compliance_prompt]" class="form-control mt-1" rows="3"
+          placeholder="例：基金績效數據之來源是否為「投信投顧公會」、「Lipper」、「晨星(Morningstar)」、「嘉實(FundDJ)」或「彭博(Bloomberg)」之一"><%= sub.compliance_prompt %></textarea>
+      </div>
+
+      <div class="form-check">
+        <input class="form-check-input compliance-mode-radio" type="radio" name="sub[<%= idx %>][compliance_mode]"
+          id="complianceModeText-<%= idx %>" value="text_presence" <%= sub.compliance_mode === 'text_presence' ? 'checked' : '' %>>
+        <label class="form-check-label fw-semibold" for="complianceModeText-<%= idx %>">文宣中必須包含特定警語文字</label>
+        <div class="text-muted" style="font-size:.8rem">不需要 AI 判斷——直接核對文宣中是否包含下列警語文字（及格式要求）</div>
+      </div>
+      <div class="compliance-panel compliance-panel-text ms-4 mt-2">
+        <label class="form-label small text-muted mb-1">應包含之警語文字</label>
+        <textarea name="sub[<%= idx %>][compliance_text]" class="form-control" rows="3"
+          placeholder="例：本基金經本公司送請董事會通過，並依法報請主管機關核准或申報生效後募集發行，惟不表示本基金絕無風險。"><%= sub.compliance_text %></textarea>
+
+        <label class="form-label small text-muted mt-3 mb-1">格式要求（可複選，留空表示不檢查格式）</label>
+        <div class="d-flex flex-wrap gap-3">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="sub[<%= idx %>][format_bold]" id="fmtBold-<%= idx %>" <%= sub.complianceFormat.bold ? 'checked' : '' %>>
+            <label class="form-check-label" for="fmtBold-<%= idx %>">粗體</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="sub[<%= idx %>][format_distinctive_color]" id="fmtColor-<%= idx %>" <%= sub.complianceFormat.distinctive_color ? 'checked' : '' %>>
+            <label class="form-check-label" for="fmtColor-<%= idx %>">顯著顏色</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="sub[<%= idx %>][format_bold_or_color]" id="fmtBoldOrColor-<%= idx %>" <%= sub.complianceFormat.bold_or_color ? 'checked' : '' %>>
+            <label class="form-check-label" for="fmtBoldOrColor-<%= idx %>">粗體或顯著顏色</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="sub[<%= idx %>][format_not_smallest]" id="fmtNotSmallest-<%= idx %>" <%= sub.complianceFormat.not_smallest ? 'checked' : '' %>>
+            <label class="form-check-label" for="fmtNotSmallest-<%= idx %>">字不能最小</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="sub[<%= idx %>][format_same_size]" id="fmtSameSize-<%= idx %>" <%= sub.complianceFormat.same_size ? 'checked' : '' %>>
+            <label class="form-check-label" for="fmtSameSize-<%= idx %>">字體相同大小</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="sub[<%= idx %>][format_underline]" id="fmtUnderline-<%= idx %>" <%= sub.complianceFormat.underline ? 'checked' : '' %>>
+            <label class="form-check-label" for="fmtUnderline-<%= idx %>">底線</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="sub[<%= idx %>][format_immediately_after]" id="fmtImmediate-<%= idx %>" <%= sub.complianceFormat.immediately_after ? 'checked' : '' %>>
+            <label class="form-check-label" for="fmtImmediate-<%= idx %>">緊接著（觸發文字之後）</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="sub[<%= idx %>][format_same_page]" id="fmtSamePage-<%= idx %>" <%= sub.complianceFormat.same_page ? 'checked' : '' %>>
+            <label class="form-check-label" for="fmtSamePage-<%= idx %>">同一頁（與觸發文字同頁）</label>
+          </div>
+        </div>
+        <div class="form-text">「緊接著」「同一頁」僅在「適用性＝文宣中出現特定文字才適用」時，才能自動核對相對位置；其他情況下僅核對警語文字本身是否出現。</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 進階設定 -->
+  <div class="mb-2">
+    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#advancedSettings-<%= idx %>">
+      <i class="bi bi-gear me-1"></i>進階設定
+    </button>
+    <span class="text-muted ms-2" style="font-size:.8rem">檢查類型／自訂參數，一般情況下不需調整</span>
+    <div class="collapse mt-2" id="advancedSettings-<%= idx %>">
+      <div class="border rounded p-3 bg-light">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">檢查類型</label>
+          <select name="sub[<%= idx %>][check_type]" class="form-select">
+            <option value="ai" <%= sub.check_type === 'ai' ? 'selected' : '' %>>AI 判斷</option>
+            <option value="auto_keyword" <%= sub.check_type === 'auto_keyword' ? 'selected' : '' %>>自動—關鍵字</option>
+            <option value="auto_format" <%= sub.check_type === 'auto_format' ? 'selected' : '' %>>自動—格式</option>
+          </select>
+          <div class="form-text">一般項目請保留「AI 判斷」，並透過上方「適用性判斷」「合規性判斷」設定即可；「自動—關鍵字／格式」為舊式設定方式，需搭配下方參數使用。</div>
+        </div>
+        <div class="mb-0">
+          <label class="form-label fw-semibold">參數 <span class="text-muted small">(JSON object)</span></label>
+          <textarea name="sub[<%= idx %>][parameters]" class="form-control font-monospace" rows="4"
+            placeholder='{}'><%= sub.parameters %></textarea>
+          <div class="form-text">例：<code>{"keywords": ["保本", "穩賺"], "placement": "same_page"}</code></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-check">
+    <input type="checkbox" name="sub[<%= idx %>][is_active]" class="form-check-input" id="subActive-<%= idx %>" <%= sub.isActive ? 'checked' : '' %>>
+    <label class="form-check-label" for="subActive-<%= idx %>">啟用此子項目</label>
+  </div>
+</div>

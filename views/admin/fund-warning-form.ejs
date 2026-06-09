@@ -1,0 +1,235 @@
+<%- include('../partials/head', { title: fund ? '編輯基金警語' : '新增基金警語', page: 'admin' }) %>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-warning bg-opacity-10 fw-semibold">
+        <i class="bi bi-<%= fund ? 'pencil' : 'plus-lg' %> me-2"></i>
+        <%= fund ? '編輯基金警語' : '新增基金警語' %>
+      </div>
+      <div class="card-body p-4">
+
+        <% if (error) { %>
+          <div class="alert alert-danger"><%= error %></div>
+        <% } %>
+
+        <form method="POST" action="/admin/fund-warnings">
+          <% if (fund && fund.id) { %>
+            <input type="hidden" name="id" value="<%= fund.id %>">
+          <% } %>
+
+          <div class="row mb-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">基金名稱 <span class="text-danger">*</span></label>
+              <input type="text" name="fund_name" class="form-control"
+                value="<%= fund ? fund.fund_name : '' %>" required placeholder="例：XX境外基金">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">警語類別</label>
+              <input type="text" name="warning_category" class="form-control"
+                value="<%= fund ? (fund.warning_category || '') : '' %>"
+                list="catList" placeholder="例：境外基金">
+              <datalist id="catList">
+                <% for (const cat of categories) { %><option value="<%= cat %>"><% } %>
+              </datalist>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">別名 <span class="text-muted small">(每行一個)</span></label>
+            <textarea name="aliases" class="form-control font-monospace" rows="3"
+              placeholder="每行輸入一個別名或簡稱"><% if (fund && fund.aliases) {
+                let a = []; try { a = JSON.parse(fund.aliases); } catch {}
+                %><%= a.join('\n') %><% } %></textarea>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label class="form-label fw-semibold mb-0">警語項目</label>
+              <button type="button" id="addItemBtn" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-plus-lg me-1"></i>新增警語項目
+              </button>
+            </div>
+            <div class="form-text mb-2">文宣中出現此基金名稱或任一別名時，會逐一核對以下每一筆警語是否符合規定。可依需求新增多筆，例如「加注文字」「綜合警語」「風險等級標示」等。</div>
+
+            <div id="itemsContainer">
+              <% items.forEach((it, idx) => {
+                let fmt = {};
+                try { fmt = JSON.parse(it.format_requirements || '{}'); } catch {}
+                const mode = it.match_mode || (it.require_immediately_after ? 'after' : 'anywhere');
+              %>
+              <div class="card mb-2 item-card">
+                <div class="card-body p-3">
+                  <div class="d-flex gap-2 mb-2">
+                    <input type="text" name="items[<%= idx %>][name]" class="form-control form-control-sm" style="max-width:220px"
+                      placeholder="警語名稱，例：加注文字" value="<%= it.name %>" required>
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-auto remove-item-btn" title="刪除此項">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                  <textarea name="items[<%= idx %>][warning_text]" class="form-control form-control-sm mb-2" rows="2"
+                    placeholder="警語內容（在文宣中應出現的文字）" required><%= it.warning_text %></textarea>
+                  <div class="row g-2">
+                    <div class="col-md-6">
+                      <div class="small text-muted mb-1">比對方式</div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="items[<%= idx %>][match]" value="after"
+                          id="match_<%= idx %>_after" <%= mode === 'after' ? 'checked' : '' %>>
+                        <label class="form-check-label small" for="match_<%= idx %>_after">需緊接基金名稱之後</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="items[<%= idx %>][match]" value="same_page"
+                          id="match_<%= idx %>_same_page" <%= mode === 'same_page' ? 'checked' : '' %>>
+                        <label class="form-check-label small" for="match_<%= idx %>_same_page">需出現在基金名稱所在當頁</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="items[<%= idx %>][match]" value="document_end"
+                          id="match_<%= idx %>_document_end" <%= mode === 'document_end' ? 'checked' : '' %>>
+                        <label class="form-check-label small" for="match_<%= idx %>_document_end">需出現在文宣最後面</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="items[<%= idx %>][match]" value="anywhere"
+                          id="match_<%= idx %>_anywhere" <%= mode === 'anywhere' ? 'checked' : '' %>>
+                        <label class="form-check-label small" for="match_<%= idx %>_anywhere">全文任意處出現即可</label>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="small text-muted mb-1">格式要求（可複選）</div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="items[<%= idx %>][fmt_bold]" id="fmtb_<%= idx %>" <%= fmt.bold ? 'checked' : '' %>>
+                        <label class="form-check-label small" for="fmtb_<%= idx %>">粗體</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="items[<%= idx %>][fmt_not_smallest]" id="fmtns_<%= idx %>" <%= fmt.not_smallest ? 'checked' : '' %>>
+                        <label class="form-check-label small" for="fmtns_<%= idx %>">字不能最小</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="items[<%= idx %>][fmt_bold_or_color]" id="fmtboc_<%= idx %>" <%= fmt.bold_or_color ? 'checked' : '' %>>
+                        <label class="form-check-label small" for="fmtboc_<%= idx %>">粗體或顯著顏色</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="items[<%= idx %>][fmt_size]" id="fmts_<%= idx %>" <%= fmt.same_size ? 'checked' : '' %>>
+                        <label class="form-check-label small" for="fmts_<%= idx %>">字體相同大小</label>
+                      </div>
+                      <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="items[<%= idx %>][fmt_underline]" id="fmtu_<%= idx %>" <%= fmt.underline ? 'checked' : '' %>>
+                        <label class="form-check-label small" for="fmtu_<%= idx %>">底線</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <% }) %>
+            </div>
+            <div class="text-muted small" id="emptyHint" style="<%= items.length > 0 ? 'display:none' : '' %>">
+              尚未新增警語項目，請按上方「新增警語項目」加入第一筆。
+            </div>
+          </div>
+
+          <template id="itemTemplate">
+          <div class="card mb-2 item-card">
+            <div class="card-body p-3">
+              <div class="d-flex gap-2 mb-2">
+                <input type="text" name="items[__INDEX__][name]" class="form-control form-control-sm" style="max-width:220px"
+                  placeholder="警語名稱，例：加注文字" required>
+                <button type="button" class="btn btn-sm btn-outline-danger ms-auto remove-item-btn" title="刪除此項">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+              <textarea name="items[__INDEX__][warning_text]" class="form-control form-control-sm mb-2" rows="2"
+                placeholder="警語內容（在文宣中應出現的文字）" required></textarea>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <div class="small text-muted mb-1">比對方式</div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="items[__INDEX__][match]" value="after" id="match___INDEX___after">
+                    <label class="form-check-label small" for="match___INDEX___after">需緊接基金名稱之後</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="items[__INDEX__][match]" value="same_page" id="match___INDEX___same_page">
+                    <label class="form-check-label small" for="match___INDEX___same_page">需出現在基金名稱所在當頁</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="items[__INDEX__][match]" value="document_end" id="match___INDEX___document_end">
+                    <label class="form-check-label small" for="match___INDEX___document_end">需出現在文宣最後面</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="items[__INDEX__][match]" value="anywhere" id="match___INDEX___anywhere" checked>
+                    <label class="form-check-label small" for="match___INDEX___anywhere">全文任意處出現即可</label>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="small text-muted mb-1">格式要求（可複選）</div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="items[__INDEX__][fmt_bold]" id="fmtb___INDEX__">
+                    <label class="form-check-label small" for="fmtb___INDEX__">粗體</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="items[__INDEX__][fmt_not_smallest]" id="fmtns___INDEX__">
+                    <label class="form-check-label small" for="fmtns___INDEX__">字不能最小</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="items[__INDEX__][fmt_bold_or_color]" id="fmtboc___INDEX__">
+                    <label class="form-check-label small" for="fmtboc___INDEX__">粗體或顯著顏色</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="items[__INDEX__][fmt_size]" id="fmts___INDEX__">
+                    <label class="form-check-label small" for="fmts___INDEX__">字體相同大小</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="items[__INDEX__][fmt_underline]" id="fmtu___INDEX__">
+                    <label class="form-check-label small" for="fmtu___INDEX__">底線</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          </template>
+
+          <div class="mb-4">
+            <div class="form-check">
+              <input type="checkbox" name="is_active" class="form-check-input" id="isActive"
+                <%= (!fund || fund.is_active) ? 'checked' : '' %>>
+              <label class="form-check-label fw-semibold" for="isActive">啟用此警語</label>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-check-lg me-1"></i>儲存
+            </button>
+            <a href="/admin/fund-warnings" class="btn btn-outline-secondary">取消</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  let itemIndex = <%= items.length %>;
+  const container = document.getElementById('itemsContainer');
+  const template = document.getElementById('itemTemplate').innerHTML;
+  const emptyHint = document.getElementById('emptyHint');
+
+  function bindRemove(card) {
+    card.querySelector('.remove-item-btn').addEventListener('click', () => card.remove());
+  }
+
+  document.querySelectorAll('.item-card').forEach(bindRemove);
+
+  document.getElementById('addItemBtn').addEventListener('click', () => {
+    const html = template.split('__INDEX__').join(itemIndex);
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html.trim();
+    const card = wrapper.firstElementChild;
+    bindRemove(card);
+    container.appendChild(card);
+    itemIndex++;
+    if (emptyHint) emptyHint.style.display = 'none';
+  });
+})();
+</script>
+
+<%- include('../partials/foot') %>

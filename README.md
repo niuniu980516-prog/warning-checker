@@ -94,7 +94,7 @@ warning-checker-ollama    running
 
 預設帳號密碼：
 - 帳號：`admin`
-- 密碼：`admin1234`
+- 密碼：`Admin1234!`
 
 > **⚠️ 請立即登入後至「使用者管理」修改預設密碼！**
 
